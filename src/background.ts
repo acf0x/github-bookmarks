@@ -4,6 +4,10 @@ import { validateMessage } from "./messages";
 import {
   initializeStore,
   readState,
+  renameBookmark,
+  addFolder,
+  removeFolder,
+  moveToFolder,
   removeBookmark,
   reorderBookmark,
   toggleBookmark,
@@ -67,6 +71,22 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
             ok: true,
             data: await reorderBookmark(message.id, message.targetId),
           });
+          break;
+        case "rename":
+          await renameBookmark(message.id, message.label);
+          respond({ ok: true });
+          break;
+        case "add-folder":
+          await addFolder(message.name);
+          respond({ ok: true });
+          break;
+        case "remove-folder":
+          await removeFolder(message.id);
+          respond({ ok: true });
+          break;
+        case "move-folder":
+          await moveToFolder(message.id, message.folderId);
+          respond({ ok: true });
           break;
         case "settings":
           respond({ ok: true, data: await updateSettings(message.patch) });

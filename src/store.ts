@@ -3,6 +3,7 @@ import {
   moveBookmark,
   parseRepository,
   validateBookmarks,
+  validateFolders,
   validateSettings,
   type Bookmark,
   type Settings,
@@ -14,9 +15,11 @@ export async function readState(): Promise<State> {
     "bookmarks",
     "settings",
     "hosts",
+    "folders",
   ]);
   return {
     bookmarks: validateBookmarks(data.bookmarks),
+    folders: validateFolders(data.folders),
     settings: validateSettings(data.settings),
     hosts: Array.isArray(data.hosts)
       ? data.hosts.filter((host): host is string => typeof host === "string")
@@ -51,6 +54,59 @@ export async function removeBookmark(id: string): Promise<Bookmark[]> {
     const next = bookmarks.filter((item) => item.id !== id);
     await chrome.storage.local.set({ bookmarks: next });
     return next;
+  });
+}
+
+export async function renameBookmark(id: string, label: string): Promise<void> {
+  await serialize(async () => {
+    const { bookmarks } = await readState();
+    const item = bookmarks.find((entry) => entry.id === id);
+    if (!item) return;
+    const next = bookmarks.map((entry) =>
+      entry.id === id
+        ? { ...entry, label: label.trim().slice(0, 100) || undefined }
+        : entry,
+    );
+    await chrome.storage.local.set({ bookmarks: next });
+  });
+}
+
+export async function addFolder(name: string): Promise<void> {
+  await serialize(async () => {
+    const { folders } = await readState();
+    await chrome.storage.local.set({
+      folders: [
+        ...folders,
+        { id: crypto.randomUUID(), name: name.trim().slice(0, 100) },
+      ],
+    });
+  });
+}
+
+export async function removeFolder(id: string): Promise<void> {
+  await serialize(async () => {
+    const { folders, bookmarks } = await readState();
+    await chrome.storage.local.set({
+      folders: folders.filter((folder) => folder.id !== id),
+      bookmarks: bookmarks.map((item) =>
+        item.folderId === id ? { ...item, folderId: undefined } : item,
+      ),
+    });
+  });
+}
+
+export async function moveToFolder(
+  id: string,
+  folderId: string | null,
+): Promise<void> {
+  await serialize(async () => {
+    const { bookmarks, folders } = await readState();
+    if (folderId && !folders.some((folder) => folder.id === folderId)) return;
+    await chrome.storage.local.set({
+      bookmarks: bookmarks.map((item) =>
+        item.id === id ? { ...item, folderId: folderId ?? undefined } : item,
+      ),
+    });
   });
 }
 
