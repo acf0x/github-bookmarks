@@ -8,6 +8,13 @@ export interface Repository {
 
 export interface Bookmark extends Repository {
   addedAt: number;
+  label?: string;
+  folderId?: string;
+}
+
+export interface Folder {
+  id: string;
+  name: string;
 }
 
 export interface Settings {
@@ -15,12 +22,15 @@ export interface Settings {
   pinned: boolean;
   side: "left" | "right";
   width: number;
+  handleY: number;
+  theme: "auto" | "light" | "dark";
 }
 
 export interface State {
   bookmarks: Bookmark[];
   settings: Settings;
   hosts: string[];
+  folders: Folder[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,6 +38,8 @@ export const DEFAULT_SETTINGS: Settings = {
   pinned: false,
   side: "right",
   width: 320,
+  handleY: 40,
+  theme: "auto",
 };
 
 const reservedOwners = new Set([
@@ -99,6 +111,12 @@ export function isRepositoryDocument(doc: Document, repo: Repository): boolean {
     'meta[name="octolytics-dimension-repository_id"], #repository-container-header, [data-testid="repository-container-header"], [data-testid="repo-header-actions"]',
   );
   if (!marker) return false;
+  if (
+    doc.querySelector(
+      '[data-testid="repo-header-actions"], #repository-container-header',
+    )
+  )
+    return true;
   return Array.from(
     doc.querySelectorAll(
       "header h1, .repohead h1, .pagehead h1, #repository-container-header h1",
@@ -151,7 +169,7 @@ export function filterBookmarks(
   const term = query.trim().toLocaleLowerCase();
   return term
     ? bookmarks.filter((item) =>
-        `${item.owner} ${item.name} ${new URL(item.origin).hostname}`
+        `${item.owner} ${item.name} ${item.label ?? ""} ${new URL(item.origin).hostname}`
           .toLocaleLowerCase()
           .includes(term),
       )
@@ -186,6 +204,12 @@ export function validateSettings(value: unknown): Settings {
       typeof data.width === "number" && Number.isFinite(data.width)
         ? Math.max(260, Math.min(520, Math.round(data.width)))
         : DEFAULT_SETTINGS.width,
+    handleY:
+      typeof data.handleY === "number" && Number.isFinite(data.handleY)
+        ? Math.max(0, Math.min(100, data.handleY))
+        : DEFAULT_SETTINGS.handleY,
+    theme:
+      data.theme === "dark" || data.theme === "light" ? data.theme : "auto",
   };
 }
 
@@ -200,7 +224,36 @@ export function validateBookmarks(value: unknown): Bookmark[] {
     if (!repo || seen.has(repo.id) || typeof entry.addedAt !== "number")
       continue;
     seen.add(repo.id);
-    result.push({ ...repo, addedAt: entry.addedAt });
+    result.push({
+      ...repo,
+      addedAt: entry.addedAt,
+      ...(typeof entry.label === "string" && entry.label.trim()
+        ? { label: entry.label.trim().slice(0, 100) }
+        : {}),
+      ...(typeof entry.folderId === "string"
+        ? { folderId: entry.folderId }
+        : {}),
+    });
   }
   return result;
+}
+
+export function validateFolders(value: unknown): Folder[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .filter((entry): entry is Folder => {
+      if (
+        !entry ||
+        typeof entry.id !== "string" ||
+        typeof entry.name !== "string" ||
+        !entry.id ||
+        !entry.name.trim() ||
+        seen.has(entry.id)
+      )
+        return false;
+      seen.add(entry.id);
+      return true;
+    })
+    .map(({ id, name }) => ({ id, name: name.trim().slice(0, 100) }));
 }

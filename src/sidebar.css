@@ -78,7 +78,7 @@ a:focus-visible,
 }
 .edge-handle {
   position: absolute;
-  top: 40%;
+  top: calc((100% - 72px) * var(--handle-ratio, 0.4));
   right: 0;
   width: 32px;
   height: 72px;
@@ -91,6 +91,12 @@ a:focus-visible,
   transition: transform 0.2s;
   display: grid;
   place-items: center;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.edge-handle:active {
+  cursor: grabbing;
 }
 .edge-handle:hover {
   transform: translateX(-3px);
@@ -313,6 +319,64 @@ a:focus-visible,
 .row-actions .icon-button svg {
   width: 13px;
   height: 13px;
+}
+.folder {
+  margin-bottom: 3px;
+  list-style: none;
+}
+.folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 8px;
+}
+.folder-header:hover {
+  background: var(--subtle);
+}
+.icon-button.folder-toggle {
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 6px 0;
+}
+.folder-toggle svg {
+  flex: none;
+  transition: transform 0.15s;
+}
+.folder-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+.folder-items {
+  margin: 0;
+  padding: 0 0 0 14px;
+  list-style: none;
+}
+.folder.drop-target > .folder-header {
+  outline: 1px solid var(--accent);
+}
+.row-actions select {
+  max-width: 84px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 10px;
 }
 .empty {
   margin: 28px 18px;

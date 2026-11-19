@@ -1,6 +1,7 @@
 import {
   filterBookmarks,
   type Bookmark,
+  type Folder,
   type Repository,
   type Settings,
   type State,
@@ -22,6 +23,8 @@ export class Sidebar {
   private status: HTMLElement;
   private settings: Settings;
   private bookmarks: Bookmark[] = [];
+  private folders: Folder[] = [];
+  private collapsed = new Set<string>();
   private current: Repository | null = null;
   private themeObserver: MutationObserver;
   private colorScheme = matchMedia("(prefers-color-scheme: dark)");
@@ -31,6 +34,7 @@ export class Sidebar {
   constructor(state: State) {
     this.settings = state.settings;
     this.bookmarks = state.bookmarks;
+    this.folders = state.folders;
     this.host = document.createElement("gh-bookmarks");
     this.root = this.host.attachShadow({ mode: "closed" });
     const style = document.createElement("style");
@@ -41,6 +45,9 @@ export class Sidebar {
     this.handle.addEventListener(
       "click",
       () => void this.setSettings({ open: true }, true),
+    );
+    this.handle.addEventListener("pointerdown", (event) =>
+      this.startHandleDrag(event),
     );
     this.root.append(this.handle);
 
@@ -111,6 +118,9 @@ export class Sidebar {
     this.count = document.createElement("span");
     this.count.className = "count";
     sectionHeader.append(sectionTitle, this.count);
+    const addFolder = button("Create folder", "plus");
+    addFolder.addEventListener("click", () => void this.createFolder());
+    sectionHeader.append(addFolder);
     this.list = document.createElement("ul");
     this.list.className = "bookmark-list";
     section.append(sectionHeader, this.list);
@@ -130,7 +140,16 @@ export class Sidebar {
       "click",
       () => void chrome.runtime.openOptionsPage(),
     );
-    footer.append(this.addCurrent, settingsButton);
+    const themeButton = button("Change theme", "sun");
+    themeButton.addEventListener(
+      "click",
+      () =>
+        void this.setSettings({
+          theme: this.host.dataset.theme === "dark" ? "light" : "dark",
+        }),
+    );
+    themeButton.dataset.action = "theme";
+    footer.append(this.addCurrent, themeButton, settingsButton);
     this.panel.append(footer);
 
     const resize = document.createElement("div");
@@ -185,9 +204,12 @@ export class Sidebar {
   setState(state: State): void {
     const bookmarksChanged =
       JSON.stringify(this.bookmarks) !== JSON.stringify(state.bookmarks);
+    const foldersChanged =
+      JSON.stringify(this.folders) !== JSON.stringify(state.folders);
     this.bookmarks = state.bookmarks;
+    this.folders = state.folders;
     this.settings = state.settings;
-    if (bookmarksChanged) this.renderList();
+    if (bookmarksChanged || foldersChanged) this.renderList();
     this.renderSettings();
     this.renderFooter();
   }
@@ -205,7 +227,12 @@ export class Sidebar {
       (!mode &&
         (html.getAttribute("data-dark-theme") !== null ||
           getComputedStyle(html).colorScheme.includes("dark")));
-    this.host.dataset.theme = dark ? "dark" : "light";
+    this.host.dataset.theme =
+      this.settings.theme === "auto"
+        ? dark
+          ? "dark"
+          : "light"
+        : this.settings.theme;
   };
 
   private async setSettings(
@@ -232,6 +259,16 @@ export class Sidebar {
     this.host.dataset.open = String(this.settings.open);
     this.host.dataset.side = this.settings.side;
     this.host.style.setProperty("--panel-width", `${this.settings.width}px`);
+    this.host.style.setProperty(
+      "--handle-ratio",
+      String(this.settings.handleY / 100),
+    );
+    this.syncTheme();
+    const themeButton = this.root.querySelector<HTMLButtonElement>(
+      '[data-action="theme"]',
+    );
+    if (themeButton)
+      themeButton.title = `Theme: ${this.settings.theme}. Click to switch light/dark`;
     const resize = this.root.querySelector<HTMLElement>(".resize");
     resize?.setAttribute("aria-valuenow", String(this.settings.width));
     resize?.setAttribute("aria-valuetext", `${this.settings.width} pixels`);
@@ -272,15 +309,7 @@ export class Sidebar {
   }
 
   private filter(): void {
-    const visible = new Set(
-      filterBookmarks(this.bookmarks, this.search.value).map((item) => item.id),
-    );
-    for (const item of Array.from(this.list.children)) {
-      const row = item as HTMLLIElement;
-      if (row.dataset.id) row.hidden = !visible.has(row.dataset.id);
-    }
-    const empty = this.list.querySelector<HTMLElement>(".empty");
-    if (empty) empty.hidden = visible.size > 0;
+    this.renderList();
   }
 
   private renderList(): void {
@@ -289,15 +318,68 @@ export class Sidebar {
     const focusedAction = focused?.dataset.action;
     this.list.replaceChildren();
     this.count.textContent = String(this.bookmarks.length);
-    for (const item of this.bookmarks) this.list.append(this.row(item));
+    const visible = filterBookmarks(this.bookmarks, this.search.value);
+    for (const folder of this.folders) {
+      const group = document.createElement("li");
+      group.className = "folder";
+      const header = document.createElement("div");
+      header.className = "folder-header";
+      const toggle = button(
+        `${this.collapsed.has(folder.id) ? "Expand" : "Collapse"} ${folder.name}`,
+        "chevron",
+      );
+      toggle.classList.add("folder-toggle");
+      toggle.setAttribute(
+        "aria-expanded",
+        String(!this.collapsed.has(folder.id)),
+      );
+      toggle.append(document.createTextNode(` ${folder.name}`));
+      toggle.addEventListener("click", () => {
+        if (!this.collapsed.delete(folder.id)) this.collapsed.add(folder.id);
+        this.renderList();
+      });
+      const remove = button(`Delete folder ${folder.name}`, "trash");
+      remove.addEventListener(
+        "click",
+        () => void send({ type: "remove-folder", id: folder.id }),
+      );
+      header.append(toggle, remove);
+      const children = document.createElement("ul");
+      children.className = "folder-items";
+      if (!this.collapsed.has(folder.id) || this.search.value)
+        for (const item of visible.filter(
+          (item) => item.folderId === folder.id,
+        ))
+          children.append(this.row(item));
+      group.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        group.classList.add("drop-target");
+      });
+      group.addEventListener("dragleave", () =>
+        group.classList.remove("drop-target"),
+      );
+      group.addEventListener("drop", (event) => {
+        event.preventDefault();
+        group.classList.remove("drop-target");
+        const id = event.dataTransfer?.getData("text/plain");
+        if (id) void send({ type: "move-folder", id, folderId: folder.id });
+      });
+      group.append(header, children);
+      this.list.append(group);
+    }
+    for (const item of visible.filter(
+      (item) =>
+        !item.folderId ||
+        !this.folders.some((folder) => folder.id === item.folderId),
+    ))
+      this.list.append(this.row(item));
     const empty = document.createElement("li");
     empty.className = "empty";
     empty.textContent = this.bookmarks.length
       ? "No repositories match your search."
       : "No bookmarks yet. Open a repository and save it here.";
-    empty.hidden = this.bookmarks.length > 0;
+    empty.hidden = visible.length > 0;
     this.list.append(empty);
-    this.filter();
     if (focusedId && focusedAction) {
       const row = Array.from(this.list.children).find(
         (element) => (element as HTMLElement).dataset.id === focusedId,
@@ -341,7 +423,7 @@ export class Sidebar {
     link.className = "repo-link";
     link.dataset.action = "link";
     const name = document.createElement("strong");
-    name.textContent = `${item.owner} / ${item.name}`;
+    name.textContent = item.label || `${item.owner} / ${item.name}`;
     const host = document.createElement("small");
     host.textContent = new URL(item.origin).hostname;
     link.append(name, host);
@@ -356,7 +438,25 @@ export class Sidebar {
     const remove = button(`Remove ${item.name}`, "trash");
     remove.dataset.action = "remove";
     remove.addEventListener("click", () => void this.remove(item.id));
-    actions.append(up, down, remove);
+    const rename = button(`Rename ${item.name}`, "edit");
+    rename.dataset.action = "rename";
+    rename.addEventListener("click", () => void this.rename(item));
+    const folder = document.createElement("select");
+    folder.setAttribute("aria-label", `Folder for ${item.label || item.name}`);
+    folder.append(new Option("No folder", ""));
+    for (const entry of this.folders)
+      folder.append(new Option(entry.name, entry.id));
+    folder.value = item.folderId ?? "";
+    folder.addEventListener(
+      "change",
+      () =>
+        void send({
+          type: "move-folder",
+          id: item.id,
+          folderId: folder.value || null,
+        }),
+    );
+    actions.append(folder, rename, up, down, remove);
     row.append(grip, link, actions);
     return row;
   }
@@ -393,6 +493,57 @@ export class Sidebar {
     } catch (error) {
       this.announce(String(error));
     }
+  }
+
+  private async rename(item: Bookmark): Promise<void> {
+    const label = prompt(
+      "Bookmark name (leave empty to restore the original)",
+      item.label ?? `${item.owner} / ${item.name}`,
+    );
+    if (label !== null) await send({ type: "rename", id: item.id, label });
+  }
+
+  private async createFolder(): Promise<void> {
+    const name = prompt("New folder name");
+    if (name?.trim())
+      await send({ type: "add-folder", name: name.trim().slice(0, 100) });
+  }
+
+  private startHandleDrag(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    const startX = event.clientX;
+    const startY = event.clientY;
+    let moved = false;
+    this.handle.setPointerCapture(event.pointerId);
+    const move = (next: PointerEvent) => {
+      if (Math.abs(next.clientY - startY) + Math.abs(next.clientX - startX) > 6)
+        moved = true;
+      if (!moved) return;
+      const ratio = (next.clientY - 36) / Math.max(1, innerHeight - 72);
+      this.settings.handleY = Math.max(0, Math.min(1, ratio)) * 100;
+      this.settings.side = next.clientX < innerWidth / 2 ? "left" : "right";
+      this.renderSettings();
+    };
+    const end = () => {
+      this.handle.removeEventListener("pointermove", move);
+      this.handle.removeEventListener("pointerup", end);
+      this.handle.removeEventListener("pointercancel", end);
+      if (moved) {
+        const swallow = (click: Event) => click.stopImmediatePropagation();
+        this.handle.addEventListener("click", swallow, { capture: true });
+        window.setTimeout(
+          () => this.handle.removeEventListener("click", swallow, true),
+          0,
+        );
+        void this.setSettings({
+          handleY: this.settings.handleY,
+          side: this.settings.side,
+        });
+      }
+    };
+    this.handle.addEventListener("pointermove", move);
+    this.handle.addEventListener("pointerup", end);
+    this.handle.addEventListener("pointercancel", end);
   }
 
   private startResize(event: PointerEvent, grip: HTMLElement): void {

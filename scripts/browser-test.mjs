@@ -229,6 +229,53 @@ try {
     "",
   );
 
+  const bar = page.locator("gh-bookmarks");
+  const edge = bar.locator(".edge-handle");
+  const box = await edge.boundingBox();
+  const viewport = page.viewportSize() ?? { width: 1280, height: 720 };
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(viewport.width - 8, box.y + 150, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForFunction(
+    () => document.querySelector("gh-bookmarks").dataset.side === "right",
+  );
+  assert.equal(await edge.count(), 1);
+  assert.equal(
+    await page.evaluate(
+      () => document.querySelector("gh-bookmarks").dataset.open,
+    ),
+    "false",
+  );
+  const themeBefore = await page.evaluate(
+    () => document.querySelector("gh-bookmarks").dataset.theme,
+  );
+  await edge.click();
+  await bar.getByRole("button", { name: "Change theme" }).click();
+  assert.notEqual(
+    await page.evaluate(
+      () => document.querySelector("gh-bookmarks").dataset.theme,
+    ),
+    themeBefore,
+  );
+  page.once("dialog", (dialog) => dialog.accept("Renamed repo"));
+  await bar
+    .getByRole("button", { name: /^Rename/ })
+    .first()
+    .click({ force: true });
+  await bar.locator(".repo-link strong", { hasText: "Renamed repo" }).waitFor();
+  page.once("dialog", (dialog) => dialog.accept("Infra"));
+  await bar.getByRole("button", { name: "Create folder" }).click();
+  await bar.locator(".folder-toggle", { hasText: "Infra" }).waitFor();
+  await bar
+    .locator(".bookmark-row select")
+    .first()
+    .selectOption({ label: "Infra" });
+  await bar.locator(".folder-items .bookmark-row").first().waitFor();
+  await bar.locator(".folder-toggle", { hasText: "Infra" }).click();
+  assert.equal(await bar.locator(".folder-items .bookmark-row").count(), 0);
+  await bar.getByRole("button", { name: "Close sidebar" }).click();
+
   await page.reload();
   await page
     .locator("gh-bookmarks")

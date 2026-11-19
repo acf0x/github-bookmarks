@@ -5,6 +5,10 @@ export type Message =
   | { type: "toggle"; url: string }
   | { type: "remove"; id: string }
   | { type: "reorder"; id: string; targetId: string }
+  | { type: "rename"; id: string; label: string }
+  | { type: "add-folder"; name: string }
+  | { type: "remove-folder"; id: string }
+  | { type: "move-folder"; id: string; folderId: string | null }
   | { type: "settings"; patch: Partial<Settings> }
   | { type: "add-host"; host: string }
   | { type: "remove-host"; host: string };
@@ -30,6 +34,30 @@ export function validateMessage(value: unknown): Message | null {
         data.targetId.length < 2048
         ? { type: "reorder", id: data.id, targetId: data.targetId }
         : null;
+    case "rename":
+      return typeof data.id === "string" &&
+        data.id.length < 2048 &&
+        typeof data.label === "string" &&
+        data.label.length <= 100
+        ? { type: "rename", id: data.id, label: data.label }
+        : null;
+    case "add-folder":
+      return typeof data.name === "string" &&
+        !!data.name.trim() &&
+        data.name.length <= 100
+        ? { type: "add-folder", name: data.name }
+        : null;
+    case "remove-folder":
+      return typeof data.id === "string" && data.id.length < 2048
+        ? { type: "remove-folder", id: data.id }
+        : null;
+    case "move-folder":
+      return typeof data.id === "string" &&
+        data.id.length < 2048 &&
+        (data.folderId === null ||
+          (typeof data.folderId === "string" && data.folderId.length < 2048))
+        ? { type: "move-folder", id: data.id, folderId: data.folderId }
+        : null;
     case "settings": {
       if (
         !data.patch ||
@@ -40,7 +68,10 @@ export function validateMessage(value: unknown): Message | null {
       const patch = data.patch as Record<string, unknown>;
       if (
         Object.keys(patch).some(
-          (key) => !["open", "pinned", "side", "width"].includes(key),
+          (key) =>
+            !["open", "pinned", "side", "width", "handleY", "theme"].includes(
+              key,
+            ),
         )
       )
         return null;
@@ -51,6 +82,16 @@ export function validateMessage(value: unknown): Message | null {
       if (
         "width" in patch &&
         (typeof patch.width !== "number" || !Number.isFinite(patch.width))
+      )
+        return null;
+      if (
+        "handleY" in patch &&
+        (typeof patch.handleY !== "number" || !Number.isFinite(patch.handleY))
+      )
+        return null;
+      if (
+        "theme" in patch &&
+        !["auto", "light", "dark"].includes(String(patch.theme))
       )
         return null;
       return { type: "settings", patch: patch as Partial<Settings> };

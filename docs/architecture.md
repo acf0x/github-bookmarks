@@ -40,13 +40,17 @@ The storage keys and identity fields come from [domain.ts](../src/domain.ts) and
 | id         origin / owner / repository            |
 | url        canonical HTTPS repository root        |
 | addedAt    timestamp                              |
+| label      optional display name                  |
+| folderId   optional folder reference              |
+| folders    Folder[] of { id, name }               |
 | hosts      approved GHES hostnames[]              |
-| settings   open, pinned, side, width              |
+| settings   open, pinned, side, width,             |
+|            handleY, theme                         |
 |                                                   |
 +---------------------------------------------------+
 ```
 
-This uses mdxcn's [GraphSpec Markdown representation](https://mdxcn.dev/docs/graph-spec). `width` is clamped to 260–520 pixels; the default is 320. Repository identity comparisons fold owner and repository casing, while the saved URL preserves their display casing.
+This uses mdxcn's [GraphSpec Markdown representation](https://mdxcn.dev/docs/graph-spec). Bookmark `label` overrides the displayed name only; the saved repository identity never changes. Deleting a folder moves its bookmarks back to the top level. `handleY` is the vertical handle position (0–100) and `theme` is `auto`, `light`, or `dark`. `width` is clamped to 260–520 pixels; the default is 320. Repository identity comparisons fold owner and repository casing, while the saved URL preserves their display casing.
 
 GitHub.com uses a manifest content script. GHES hosts are registered dynamically after an exact optional HTTPS host permission is granted from the options page. Registration persists across browser sessions. Startup reconciliation drops hosts whose permission was revoked and unregisters stale scripts. Removal unregisters the specific host script and revokes its specific origin permission.
 
