@@ -89,7 +89,7 @@ export function parseRepository(input: string): Repository | null {
 export function isRepositoryDocument(doc: Document): boolean {
   return Boolean(
     doc.querySelector(
-      'meta[name="octolytics-dimension-repository_id"], #repository-container-header, [data-testid="repository-container-header"], [data-hydro-click*="repository_id"]',
+      'meta[name="octolytics-dimension-repository_id"], #repository-container-header, [data-testid="repository-container-header"], [data-testid="repo-header-actions"]',
     ),
   );
 }
@@ -118,7 +118,9 @@ export function normalizeHostname(input: string): string | null {
   if (
     host === "github.com" ||
     host === "localhost" ||
-    !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])$/.test(host) ||
+    !host
+      .split(".")
+      .every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)) ||
     !host.includes(".") ||
     host.includes("..")
   )

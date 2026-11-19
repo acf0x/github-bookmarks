@@ -6,7 +6,7 @@ export function hostPattern(host: string): string {
 }
 
 function scriptId(host: string): string {
-  return `ghb-${host.replaceAll(".", "-")}`;
+  return `ghb-${host.replaceAll(".", "_")}`;
 }
 
 export async function addHost(input: string): Promise<string> {

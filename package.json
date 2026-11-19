@@ -10,7 +10,9 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build"
+    "test:browser": "node scripts/browser-test.mjs",
+    "validate:manifest": "node scripts/validate-manifest.mjs",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build && npm run validate:manifest"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
@@ -19,6 +21,7 @@
     "eslint": "^9.39.0",
     "globals": "^16.5.0",
     "jsdom": "^26.1.0",
+    "playwright-core": "^1.65.1",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.0",

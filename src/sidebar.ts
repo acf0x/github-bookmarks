@@ -32,7 +32,7 @@ export class Sidebar {
     this.settings = state.settings;
     this.bookmarks = state.bookmarks;
     this.host = document.createElement("gh-bookmarks");
-    this.root = this.host.attachShadow({ mode: "closed" });
+    this.root = this.host.attachShadow({ mode: "open" });
     const style = document.createElement("style");
     style.textContent = styleText;
     this.root.append(style);
