@@ -4,7 +4,7 @@
   "short_name": "Bookmarks",
   "description": "Private, local repository favorites for GitHub and GitHub Enterprise.",
   "version": "0.1.0",
-  "minimum_chrome_version": "114",
+  "minimum_chrome_version": "123",
   "permissions": ["storage", "scripting"],
   "host_permissions": ["https://github.com/*"],
   "optional_host_permissions": ["https://*/*"],

@@ -6,7 +6,7 @@ A small Chromium extension for saving GitHub repositories in an integrated sideb
 
 ## Install
 
-Chrome 114+ or Edge 114+:
+Chrome 123+ or Edge 123+:
 
 1. Download or clone this repository and check out `feature/extension-mv3`.
 2. Open `chrome://extensions` or `edge://extensions` and enable **Developer mode**.

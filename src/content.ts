@@ -34,14 +34,31 @@ async function start(): Promise<void> {
   let lastUrl = "";
   let timer = 0;
 
+  function isLanding(): boolean {
+    return location.pathname.split("/").filter(Boolean).length === 2;
+  }
+
   function getCurrent(): Repository | null {
     const repo = parseRepository(location.href);
-    return repo && isRepositoryDocument(document) ? repo : null;
+    return repo && isRepositoryDocument(document, repo) ? repo : null;
   }
 
   function target(): HTMLElement | null {
-    return document.querySelector<HTMLElement>(
+    const known = document.querySelector<HTMLElement>(
       '[data-testid="repo-header-actions"], .pagehead-actions, #repository-container-header ul, [data-testid="repository-container-header"] .d-flex, #repository-container-header',
+    );
+    if (known) return known;
+    const heading = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        "header h1, .repohead h1, .pagehead h1",
+      ),
+    ).find((item) =>
+      item.textContent
+        ?.toLocaleLowerCase()
+        .includes(current?.name.toLocaleLowerCase() ?? "\0"),
+    );
+    return (
+      heading?.closest<HTMLElement>("header, .repohead, .pagehead") ?? null
     );
   }
 
@@ -66,8 +83,7 @@ async function start(): Promise<void> {
   }
 
   function injectAction(): void {
-    const landing = location.pathname.split("/").filter(Boolean).length === 2;
-    const parent = current && landing ? target() : null;
+    const parent = current && isLanding() ? target() : null;
     if (!parent) {
       clearAction();
       return;
@@ -120,7 +136,12 @@ async function start(): Promise<void> {
     lastUrl = url;
     current = repo;
     if (changed) sidebar.setCurrent(repo);
-    if (changed || !wrapper?.isConnected || !action?.isConnected)
+    if (
+      changed ||
+      (current &&
+        isLanding() &&
+        (!wrapper?.isConnected || !action?.isConnected))
+    )
       injectAction();
   }
 
@@ -133,10 +154,7 @@ async function start(): Promise<void> {
   const observer = new MutationObserver((mutations) => {
     if (
       location.href !== lastUrl ||
-      (current && (!wrapper?.isConnected || !isRepositoryDocument(document))) ||
-      (!current &&
-        parseRepository(location.href) &&
-        isRepositoryDocument(document)) ||
+      (current && isLanding() && !wrapper?.isConnected) ||
       mutations.some(
         (change) =>
           change.target instanceof HTMLElement &&
@@ -168,7 +186,11 @@ async function start(): Promise<void> {
       updateAction();
     });
   });
-  window.addEventListener("pagehide", () => {
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) schedule();
+  });
+  window.addEventListener("pagehide", (event) => {
+    if (event.persisted) return;
     observer.disconnect();
     sidebar.destroy();
     clearAction();

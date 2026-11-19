@@ -7,6 +7,17 @@ import assert from "node:assert/strict";
 const profile = await mkdtemp(join(tmpdir(), "ghb-browser-"));
 const extension = join(profile, "extension");
 await cp(resolve("dist"), extension, { recursive: true });
+const contentPath = join(extension, "content.js");
+const content = await readFile(contentPath, "utf8");
+// Expose the test copy's shadow tree to Playwright; production keeps it closed.
+assert.equal(content.includes('attachShadow({mode:"closed"})'), true);
+await writeFile(
+  contentPath,
+  content.replace(
+    'attachShadow({mode:"closed"})',
+    'attachShadow({mode:"open"})',
+  ),
+);
 const manifestPath = join(extension, "manifest.json");
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 // The test profile grants one exact fixture host; the production manifest stays optional.
@@ -27,13 +38,19 @@ try {
     (await context.waitForEvent("serviceworker"));
   const extensionId = new URL(worker.url()).host;
   const repoHtml = await readFile("tests/fixtures/ghes-repo.html", "utf8");
+  const fallbackHtml = await readFile(
+    "tests/fixtures/ghes-repo-fallback.html",
+    "utf8",
+  );
   const orgHtml = await readFile("tests/fixtures/ghes-org.html", "utf8");
   const page = await context.newPage();
   await page.route("https://github.com/**", async (route) => {
     await route.fulfill({
       contentType: "text/html",
       body: /\/acme\/(tool|other)/.test(route.request().url())
-        ? repoHtml
+        ? route.request().url().includes("/acme/other")
+          ? repoHtml.replaceAll("acme / tool", "acme / other")
+          : repoHtml
         : orgHtml,
     });
   });
@@ -108,6 +125,8 @@ try {
   await page.evaluate(() => {
     history.pushState({}, "", "/acme/other");
     document.querySelector("main h1").textContent = "acme / other";
+    document.querySelector("#repository-container-header h1").textContent =
+      "acme / other";
     dispatchEvent(new Event("soft-nav:end"));
   });
   await page.waitForFunction(
@@ -117,12 +136,39 @@ try {
   );
   await page.evaluate(() => {
     document.querySelector("#repository-container-header").innerHTML =
-      '<ul class="pagehead-actions"><li><button>Star</button></li></ul>';
+      '<h1>acme / other</h1><ul class="pagehead-actions"><li><button>Star</button></li></ul>';
   });
   await page.locator(".ghb-action").waitFor();
   assert.equal(await page.locator(".ghb-action").count(), 1);
+  await page.evaluate(() => {
+    document.querySelector("#repository-container-header").innerHTML =
+      "<h1>acme / other</h1><div>Repository actions unavailable</div>";
+  });
+  await page.locator("#repository-container-header .ghb-action").waitFor();
+  assert.equal(await page.locator(".ghb-action").count(), 1);
   await page.locator(".ghb-action").click();
   await page.locator("gh-bookmarks").locator(".bookmark-row").last().waitFor();
+  await page.evaluate(() => {
+    history.pushState({}, "", "/acme/other/issues/1");
+    dispatchEvent(new Event("soft-nav:end"));
+  });
+  await page.waitForFunction(() => !document.querySelector(".ghb-action"));
+  assert.equal(await page.locator("gh-bookmarks").count(), 1);
+  await page.evaluate(() => {
+    history.pushState({}, "", "/acme/projects");
+    dispatchEvent(new Event("soft-nav:end"));
+  });
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector("gh-bookmarks")
+        ?.shadowRoot.querySelector(".add-current")?.hidden === true,
+  );
+  await page.evaluate(() => {
+    history.pushState({}, "", "/acme/other");
+    dispatchEvent(new Event("soft-nav:end"));
+  });
+  await page.locator(".ghb-action").waitFor();
   const search = page.locator("gh-bookmarks").locator('input[type="search"]');
   await search.fill("other");
   assert.equal(
@@ -167,6 +213,13 @@ try {
     await page.evaluate(() => document.documentElement.style.paddingLeft),
     "336px",
   );
+  assert.equal(
+    await page
+      .locator("gh-bookmarks")
+      .getByRole("separator")
+      .getAttribute("aria-valuenow"),
+    "336",
+  );
   await page
     .locator("gh-bookmarks")
     .getByRole("button", { name: "Close sidebar" })
@@ -186,7 +239,7 @@ try {
     await page.locator(".ghb-action").getAttribute("aria-pressed"),
     "true",
   );
-  await page.goto("https://github.com/acme");
+  await page.goto("https://github.com/acme/projects");
   await page.locator("gh-bookmarks").waitFor();
   assert.equal(await page.locator(".ghb-action").count(), 0);
   await page
@@ -211,7 +264,12 @@ try {
   });
   const enterprise = await context.newPage();
   await enterprise.route("https://github.company.example/**", (route) =>
-    route.fulfill({ contentType: "text/html", body: repoHtml }),
+    route.fulfill({
+      contentType: "text/html",
+      body: route.request().url().includes("/acme/fallback")
+        ? fallbackHtml
+        : repoHtml,
+    }),
   );
   await enterprise.goto("https://github.company.example/acme/tool");
   await enterprise.locator("gh-bookmarks").waitFor();
@@ -227,6 +285,8 @@ try {
     .locator(".bookmark-row")
     .filter({ hasText: "github.company.example" })
     .waitFor();
+  await enterprise.goto("https://github.company.example/acme/fallback");
+  await enterprise.locator("header .ghb-action").waitFor();
   await enterprise.close();
   console.log(
     "Browser checks passed: button, sidebar, persistence, themes, org pages, Enterprise fixture.",

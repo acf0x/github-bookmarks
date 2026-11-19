@@ -86,11 +86,27 @@ export function parseRepository(input: string): Repository | null {
   return { id, origin, owner, name, url: `${origin}/${owner}/${name}` };
 }
 
-export function isRepositoryDocument(doc: Document): boolean {
-  return Boolean(
-    doc.querySelector(
-      'meta[name="octolytics-dimension-repository_id"], #repository-container-header, [data-testid="repository-container-header"], [data-testid="repo-header-actions"]',
+export function isRepositoryDocument(doc: Document, repo: Repository): boolean {
+  const nwo = doc.querySelector<HTMLMetaElement>(
+    'meta[name="octolytics-dimension-repository_nwo"]',
+  )?.content;
+  if (nwo)
+    return (
+      nwo.trim().toLocaleLowerCase() ===
+      `${repo.owner}/${repo.name}`.toLocaleLowerCase()
+    );
+  const marker = doc.querySelector(
+    'meta[name="octolytics-dimension-repository_id"], #repository-container-header, [data-testid="repository-container-header"], [data-testid="repo-header-actions"]',
+  );
+  if (!marker) return false;
+  return Array.from(
+    doc.querySelectorAll(
+      "header h1, .repohead h1, .pagehead h1, #repository-container-header h1",
     ),
+  ).some((heading) =>
+    heading.textContent
+      ?.toLocaleLowerCase()
+      .includes(repo.name.toLocaleLowerCase()),
   );
 }
 

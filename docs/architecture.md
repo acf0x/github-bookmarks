@@ -8,7 +8,7 @@ The Manifest V3 service worker is the only writer for bookmark and preference mu
 
 GitHub.com uses a manifest content script. GHES hosts are registered dynamically after an exact optional HTTPS host permission is granted from the options page. Registration persists across browser sessions. Startup reconciliation drops hosts whose permission was revoked and unregisters stale scripts. Removal unregisters the specific host script and revokes its specific origin permission.
 
-The content script mounts one Shadow DOM sidebar per page. It watches GitHub navigation events and a debounced DOM observer for repository header replacement. The compact repository action is inserted into the existing action list where available, with a repository-header fallback. It never calls GitHub's native Star control. Search, reordering, docking, pinning, and resizing are local UI operations; persistent changes go through the service worker.
+The content script mounts one closed Shadow DOM sidebar per page. The closed tree limits direct access to cross-host bookmark names from page scripts, though a rendered sidebar is not a hard security boundary against the host page. It watches GitHub navigation events and a debounced DOM observer for repository header replacement. The compact repository action is inserted into the existing action list where available, with a repository-header fallback. It never calls GitHub's native Star control. Search, reordering, docking, pinning, and resizing are local UI operations; persistent changes go through the service worker.
 
 ## Trust boundaries
 

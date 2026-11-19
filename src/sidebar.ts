@@ -32,7 +32,7 @@ export class Sidebar {
     this.settings = state.settings;
     this.bookmarks = state.bookmarks;
     this.host = document.createElement("gh-bookmarks");
-    this.root = this.host.attachShadow({ mode: "open" });
+    this.root = this.host.attachShadow({ mode: "closed" });
     const style = document.createElement("style");
     style.textContent = styleText;
     this.root.append(style);
@@ -138,6 +138,8 @@ export class Sidebar {
     resize.setAttribute("role", "separator");
     resize.setAttribute("aria-label", "Resize bookmarks sidebar");
     resize.setAttribute("aria-orientation", "vertical");
+    resize.setAttribute("aria-valuemin", "260");
+    resize.setAttribute("aria-valuemax", "520");
     resize.tabIndex = 0;
     resize.addEventListener("pointerdown", (event) =>
       this.startResize(event, resize),
@@ -230,6 +232,9 @@ export class Sidebar {
     this.host.dataset.open = String(this.settings.open);
     this.host.dataset.side = this.settings.side;
     this.host.style.setProperty("--panel-width", `${this.settings.width}px`);
+    const resize = this.root.querySelector<HTMLElement>(".resize");
+    resize?.setAttribute("aria-valuenow", String(this.settings.width));
+    resize?.setAttribute("aria-valuetext", `${this.settings.width} pixels`);
     this.handle.setAttribute("aria-expanded", String(this.settings.open));
     this.handle.setAttribute("aria-controls", this.panel.id);
     this.panel.setAttribute("aria-hidden", String(!this.settings.open));

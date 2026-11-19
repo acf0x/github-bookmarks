@@ -49,10 +49,15 @@ describe("repository identity", () => {
       "<main><h1>User profile</h1></main>",
       "text/html",
     );
-    expect(isRepositoryDocument(doc)).toBe(false);
+    const repo = parseRepository("https://github.company.example/acme/tool")!;
+    expect(isRepositoryDocument(doc, repo)).toBe(false);
     doc.head.innerHTML =
       '<meta name="octolytics-dimension-repository_id" content="42">';
-    expect(isRepositoryDocument(doc)).toBe(true);
+    doc.body.innerHTML = "<header><h1>acme / tool</h1></header>";
+    expect(isRepositoryDocument(doc, repo)).toBe(true);
+    doc.head.innerHTML +=
+      '<meta name="octolytics-dimension-repository_nwo" content="acme/other">';
+    expect(isRepositoryDocument(doc, repo)).toBe(false);
   });
 });
 
