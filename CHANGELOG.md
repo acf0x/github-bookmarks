@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-11-19
 
 - Add a footer theme switch (light/dark); Enterprise host settings now use a distinct sliders icon.
 - Make the sidebar handle draggable vertically and across the screen to dock on either side.

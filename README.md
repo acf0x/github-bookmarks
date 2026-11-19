@@ -6,7 +6,7 @@ A small Chromium and Firefox extension for saving GitHub repositories in an inte
 
 ## Install
 
-For Chrome 123+ or Edge 123+, download and extract the [Chromium release ZIP](https://github.com/acf0x/github-bookmarks/releases/tag/v0.1.1), or clone `main`. This quick path uses mdxcn's [Steps Markdown representation](https://mdxcn.dev/docs/steps):
+For Chrome 123+ or Edge 123+, download and extract the [Chromium release ZIP](https://github.com/acf0x/github-bookmarks/releases/tag/v0.2.0), or clone `main`. This quick path uses mdxcn's [Steps Markdown representation](https://mdxcn.dev/docs/steps):
 
 ```text
 +------------------ [ INSTALL ] -------------------+
