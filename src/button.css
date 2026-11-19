@@ -1,0 +1,56 @@
+.ghb-action-wrap {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: 8px;
+  list-style: none;
+}
+.ghb-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 3px 11px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  border-radius: 6px;
+  background: var(--button-default-bgColor-rest, #f6f8fa);
+  color: var(--fgColor-default, #1f2328);
+  font:
+    600 12px/1.4 -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    transform 0.15s;
+}
+.ghb-action:hover {
+  background: var(--button-default-bgColor-hover, #eaeef2);
+}
+.ghb-action:active {
+  transform: scale(0.97);
+}
+.ghb-action:focus-visible {
+  outline: 2px solid var(--focus-outlineColor, #0969da);
+  outline-offset: 2px;
+}
+.ghb-action.ghb-saved {
+  color: var(--fgColor-accent, #0969da);
+}
+.ghb-action.ghb-saved svg {
+  fill: currentColor;
+}
+@media (max-width: 840px) {
+  .ghb-action .ghb-label {
+    display: none;
+  }
+  .ghb-action {
+    padding-inline: 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ghb-action {
+    transition: none;
+  }
+}
