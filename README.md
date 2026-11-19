@@ -6,12 +6,26 @@ A small Chromium and Firefox extension for saving GitHub repositories in an inte
 
 ## Install
 
-Chrome 123+ or Edge 123+:
+For Chrome 123+ or Edge 123+, download and extract the [Chromium release ZIP](https://github.com/acf0x/github-bookmarks/releases/tag/v0.1.0), or clone `main`. This quick path uses mdxcn's [Steps Markdown representation](https://mdxcn.dev/docs/steps):
 
-1. Download or clone this repository and check out `main`.
-2. Open `chrome://extensions` or `edge://extensions` and enable **Developer mode**.
-3. Choose **Load unpacked** and select the `dist` folder.
-4. Open a GitHub repository page. The bookmark button appears beside the repository actions, and the slim handle at the browser edge opens the sidebar.
+```text
++------------------ [ INSTALL ] -------------------+
+|                                                  |
+| 1  Get the files                                 |
+|    Extract the ZIP, or clone the repository.     |
+| │                                                |
+| 2  Enable Developer mode                         |
+|    Open chrome://extensions.                     |
+|    In Edge, open edge://extensions.              |
+| │                                                |
+| 3  Load unpacked                                 |
+|    Choose the ZIP root or the repository's dist. |
+| │                                                |
+| 4  Open a GitHub repository                      |
+|    Use the favorite button or sidebar handle.    |
+|                                                  |
++--------------------------------------------------+
+```
 
 The committed `dist` folder is ready to load. To rebuild it from source, install Node.js 22+ and run:
 
