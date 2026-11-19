@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add a footer theme switch (light/dark); Enterprise host settings now use a distinct sliders icon.
+- Make the sidebar handle draggable vertically and across the screen to dock on either side.
+- Allow renaming saved repositories without changing their identity.
+- Add collapsible folders for grouping saved repositories.
+- Show the favorite button on more repository headers and pages, including layouts without header markers.
+
 ## 0.1.1 — 2026-11-19
 
 - Document architecture, Enterprise onboarding, security, testing, and release workflows with selected mdxcn-compatible Markdown figures.

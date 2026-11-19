@@ -43,6 +43,10 @@ For Firefox 142+, the release includes an **unsigned XPI for temporary use**. Op
 - Click **Add favorite** in a repository header, or open the sidebar and choose **Add current repository**. Click the header button again or use the row's remove control to unsave it.
 - The sidebar is available on GitHub repository, organization, and dashboard pages. Open it with the edge handle; close it with the X button or pin it to reserve space beside GitHub content.
 - Use the header controls to move the sidebar between left and right. Drag its inner edge to resize it. These preferences persist locally.
+- Drag the edge handle up or down to reposition it. Drag it across the middle of the screen to dock the sidebar on the other side.
+- Use the pencil on a saved row to give it a custom name; an empty name restores the default.
+- Use the plus in the **Saved repositories** header to create folders. Assign a repository with the row's folder selector or by dragging it onto a folder, and expand or collapse folders with their arrow.
+- The sun/moon button in the footer switches between light and dark; the sliders button opens Enterprise host settings.
 - Search by owner, repository name, or hostname. Drag rows to reorder them, or use each row's **Move up** and **Move down** buttons with the keyboard. Links keep normal browser behavior, including open in a new tab.
 - The extension toolbar icon opens Enterprise host settings.
 
