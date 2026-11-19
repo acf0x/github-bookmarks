@@ -45,12 +45,12 @@ async function start(): Promise<void> {
 
   function target(): HTMLElement | null {
     const known = document.querySelector<HTMLElement>(
-      '[data-testid="repo-header-actions"], .pagehead-actions, #repository-container-header ul, [data-testid="repository-container-header"] .d-flex, #repository-container-header',
+      '[data-testid="repo-header-actions"], ul.pagehead-actions, .pagehead-actions, #repository-container-header ul, [data-testid="repository-container-header"] .d-flex, #repository-container-header, [data-testid="repository-container-header"], #repo-title-component',
     );
     if (known) return known;
     const heading = Array.from(
       document.querySelectorAll<HTMLElement>(
-        "header h1, .repohead h1, .pagehead h1",
+        "header h1, .repohead h1, .pagehead h1, h1",
       ),
     ).find((item) =>
       item.textContent
@@ -58,7 +58,9 @@ async function start(): Promise<void> {
         .includes(current?.name.toLocaleLowerCase() ?? "\0"),
     );
     return (
-      heading?.closest<HTMLElement>("header, .repohead, .pagehead") ?? null
+      heading?.closest<HTMLElement>("header, .repohead, .pagehead") ??
+      heading?.parentElement ??
+      null
     );
   }
 
@@ -177,7 +179,9 @@ async function start(): Promise<void> {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (
       area !== "local" ||
-      !["bookmarks", "settings", "hosts"].some((key) => key in changes)
+      !["bookmarks", "settings", "hosts", "folders"].some(
+        (key) => key in changes,
+      )
     )
       return;
     void readState().then((next) => {
