@@ -3,7 +3,7 @@ import { readFile, stat } from "node:fs/promises";
 
 const manifest = JSON.parse(await readFile("dist/manifest.json", "utf8"));
 assert.equal(manifest.manifest_version, 3);
-assert.equal(manifest.version, "0.1.0");
+assert.equal(manifest.version, "0.1.1");
 assert.equal(manifest.minimum_chrome_version, "123");
 assert.deepEqual(manifest.permissions.sort(), ["scripting", "storage"]);
 assert.deepEqual(manifest.host_permissions, ["https://github.com/*"]);

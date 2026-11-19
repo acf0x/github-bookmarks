@@ -1,17 +1,31 @@
 # GitHub Bookmarks
 
-A small Chromium extension for saving GitHub repositories in an integrated sidebar. Bookmarks are local to this browser profile. It works on `github.com` and on GitHub Enterprise Server (GHES) domains that you explicitly approve. No token, OAuth flow, GitHub API, or backend is involved.
+A small Chromium and Firefox extension for saving GitHub repositories in an integrated sidebar. Bookmarks are local to this browser profile. It works on `github.com` and on GitHub Enterprise Server (GHES) domains that you explicitly approve. No token, OAuth flow, GitHub API, or backend is involved.
 
 ![GitHub Bookmarks on GitHub](screenshots/github-live.png)
 
 ## Install
 
-Chrome 123+ or Edge 123+:
+For Chrome 123+ or Edge 123+, download and extract the [Chromium release ZIP](https://github.com/acf0x/github-bookmarks/releases/tag/v0.1.1), or clone `main`. This quick path uses mdxcn's [Steps Markdown representation](https://mdxcn.dev/docs/steps):
 
-1. Download or clone this repository and check out `feature/extension-mv3`.
-2. Open `chrome://extensions` or `edge://extensions` and enable **Developer mode**.
-3. Choose **Load unpacked** and select the `dist` folder.
-4. Open a GitHub repository page. The bookmark button appears beside the repository actions, and the slim handle at the browser edge opens the sidebar.
+```text
++------------------ [ INSTALL ] -------------------+
+|                                                  |
+| 1  Get the files                                 |
+|    Extract the ZIP, or clone the repository.     |
+| │                                                |
+| 2  Enable Developer mode                         |
+|    Open chrome://extensions.                     |
+|    In Edge, open edge://extensions.              |
+| │                                                |
+| 3  Load unpacked                                 |
+|    Choose the ZIP root or the repository's dist. |
+| │                                                |
+| 4  Open a GitHub repository                      |
+|    Use the favorite button or sidebar handle.    |
+|                                                  |
++--------------------------------------------------+
+```
 
 The committed `dist` folder is ready to load. To rebuild it from source, install Node.js 22+ and run:
 
@@ -72,4 +86,10 @@ Repository identity is the HTTPS origin plus owner and repository name. The exte
 
 This is a repository bookmark tool. It does not explore code, manage issues or pull requests, mirror GitHub Stars, discover repositories, or use GitHub authentication APIs.
 
-See [architecture and security](docs/architecture.md), [attribution](ATTRIBUTION.md), and [changelog](CHANGELOG.md).
+## Documentation
+
+- [Architecture and storage model](docs/architecture.md)
+- [GitHub Enterprise setup](docs/GITHUB_ENTERPRISE.md)
+- [Security and permissions](docs/SECURITY.md)
+- [Development](docs/DEVELOPMENT.md), [testing](docs/TESTING.md), and [releasing](docs/RELEASING.md)
+- [Attribution](ATTRIBUTION.md) and [changelog](CHANGELOG.md)
