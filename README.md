@@ -1,3 +1,75 @@
 # GitHub Bookmarks
 
-A local-first Chromium extension for GitHub repository favorites.
+A small Chromium extension for saving GitHub repositories in an integrated sidebar. Bookmarks are local to this browser profile. It works on `github.com` and on GitHub Enterprise Server (GHES) domains that you explicitly approve. No token, OAuth flow, GitHub API, or backend is involved.
+
+![GitHub Bookmarks on GitHub](screenshots/github-live.png)
+
+## Install
+
+Chrome 123+ or Edge 123+:
+
+1. Download or clone this repository and check out `feature/extension-mv3`.
+2. Open `chrome://extensions` or `edge://extensions` and enable **Developer mode**.
+3. Choose **Load unpacked** and select the `dist` folder.
+4. Open a GitHub repository page. The bookmark button appears beside the repository actions, and the slim handle at the browser edge opens the sidebar.
+
+The committed `dist` folder is ready to load. To rebuild it from source, install Node.js 22+ and run:
+
+```sh
+npm ci
+npm run build
+```
+
+After rebuilding, click **Reload** for the extension on the browser extensions page.
+
+For Firefox 142+, the release includes an **unsigned XPI for temporary use**. Open `about:debugging`, select **This Firefox** → **Load Temporary Add-on**, and choose the XPI. Firefox removes temporary add-ons when it closes; permanent installation in Firefox stable requires Mozilla signing. The Firefox build is in `dist-firefox` and uses a background script instead of a service worker.
+
+## Use
+
+- Click **Add favorite** in a repository header, or open the sidebar and choose **Add current repository**. Click the header button again or use the row's remove control to unsave it.
+- The sidebar is available on GitHub repository, organization, and dashboard pages. Open it with the edge handle; close it with the X button or pin it to reserve space beside GitHub content.
+- Use the header controls to move the sidebar between left and right. Drag its inner edge to resize it. These preferences persist locally.
+- Search by owner, repository name, or hostname. Drag rows to reorder them, or use each row's **Move up** and **Move down** buttons with the keyboard. Links keep normal browser behavior, including open in a new tab.
+- The extension toolbar icon opens Enterprise host settings.
+
+### Add GitHub Enterprise Server
+
+1. Click the extension icon and enter the GHES hostname, such as `github.company.example`. An `https://` prefix is optional. Paths, ports, HTTP, and wildcards are rejected.
+2. Click **Add host**. The browser asks for access to that specific HTTPS host. Approve it to enable integration.
+3. Reload any tabs already open on that host. New pages then get the sidebar and repository button.
+4. Remove a host on the same page to unregister its script and revoke that exact origin permission. Reload any already open pages to remove their existing injected UI.
+
+This does not sign in to GHES. Sign in through your browser as usual. The extension never reads cookies or credentials.
+
+## Privacy and permissions
+
+| Permission             | Why it is used                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`              | Save bookmarks, approved hosts, and sidebar preferences in `chrome.storage.local`.                                                    |
+| `scripting`            | Register and unregister a content script for each approved GHES host.                                                                 |
+| `https://github.com/*` | Run the sidebar and repository button on GitHub.com.                                                                                  |
+| Optional `https://*/*` | Allows the browser to offer an exact HTTPS origin grant for a user-entered GHES host. The extension never requests all hosts at once. |
+
+The extension does not use `tabs`, `cookies`, `identity`, `webRequest`, analytics, external assets, or remote code. It makes no GitHub API calls and sends no bookmarks to other services. It does not synchronize across devices; only tabs in the same browser profile share local state. Browser backup policies may still govern the profile itself.
+
+## Development and verification
+
+```sh
+npm ci
+npm run check
+npx playwright install chromium
+npm run test:browser
+npx -y web-ext lint --source-dir dist-firefox
+```
+
+`npm run check` runs TypeScript, ESLint, Prettier, unit tests, both production builds, and manifest validation. `npm run test:browser` loads the unpacked extension in an isolated Chrome for Testing profile and covers button injection, sidebar interactions, SPA navigation, header replacement, persistence, cross-tab updates, light/dark themes, and a mocked GHES domain. Its GHES fixture uses an exact temporary test permission; the native browser permission prompt still requires a human click in the production flow. Tests never need corporate credentials.
+
+Screenshots: [light theme](screenshots/light.png), [dark theme](screenshots/dark.png), [public GitHub page](screenshots/github-live.png).
+
+## Scope and limits
+
+Repository identity is the HTTPS origin plus owner and repository name. The extension only offers bookmarking when the current page has recognizable repository metadata. An unusual GHES theme that removes those markers can still show the sidebar but may not expose **Add current repository**. Real corporate GHES layouts and SSO were not tested; the Enterprise checks use fixtures. Existing GHES tabs need a reload after granting or removing a host. Disabling the extension may also require a page reload to remove UI already injected into an open tab.
+
+This is a repository bookmark tool. It does not explore code, manage issues or pull requests, mirror GitHub Stars, discover repositories, or use GitHub authentication APIs.
+
+See [architecture and security](docs/architecture.md), [attribution](ATTRIBUTION.md), and [changelog](CHANGELOG.md).
