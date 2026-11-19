@@ -22,6 +22,8 @@ npm run build
 
 After rebuilding, click **Reload** for the extension on the browser extensions page.
 
+For Firefox 142+, the release includes an **unsigned XPI for temporary use**. Open `about:debugging`, select **This Firefox** → **Load Temporary Add-on**, and choose the XPI. Firefox removes temporary add-ons when it closes; permanent installation in Firefox stable requires Mozilla signing. The Firefox build is in `dist-firefox` and uses a background script instead of a service worker.
+
 ## Use
 
 - Click **Add favorite** in a repository header, or open the sidebar and choose **Add current repository**. Click the header button again or use the row's remove control to unsave it.
@@ -57,9 +59,10 @@ npm ci
 npm run check
 npx playwright install chromium
 npm run test:browser
+npx -y web-ext lint --source-dir dist-firefox
 ```
 
-`npm run check` runs TypeScript, ESLint, Prettier, unit tests, the production build, and manifest validation. `npm run test:browser` loads the unpacked extension in an isolated Chrome for Testing profile and covers button injection, sidebar interactions, SPA navigation, header replacement, persistence, cross-tab updates, light/dark themes, and a mocked GHES domain. Its GHES fixture uses an exact temporary test permission; the native browser permission prompt still requires a human click in the production flow. Tests never need corporate credentials.
+`npm run check` runs TypeScript, ESLint, Prettier, unit tests, both production builds, and manifest validation. `npm run test:browser` loads the unpacked extension in an isolated Chrome for Testing profile and covers button injection, sidebar interactions, SPA navigation, header replacement, persistence, cross-tab updates, light/dark themes, and a mocked GHES domain. Its GHES fixture uses an exact temporary test permission; the native browser permission prompt still requires a human click in the production flow. Tests never need corporate credentials.
 
 Screenshots: [light theme](screenshots/light.png), [dark theme](screenshots/dark.png), [public GitHub page](screenshots/github-live.png).
 

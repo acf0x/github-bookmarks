@@ -22,3 +22,32 @@ for (const [size, file] of Object.entries(manifest.icons)) {
   assert.equal(png.readUInt32BE(20), Number(size));
 }
 console.log("Manifest and referenced assets are valid.");
+const firefox = JSON.parse(
+  await readFile("dist-firefox/manifest.json", "utf8"),
+);
+assert.equal(firefox.manifest_version, 3);
+assert.deepEqual(firefox.background, { scripts: ["background.js"] });
+assert.equal(
+  firefox.browser_specific_settings.gecko.strict_min_version,
+  "142.0",
+);
+assert.deepEqual(
+  firefox.browser_specific_settings.gecko.data_collection_permissions.required,
+  ["none"],
+);
+assert.equal(firefox.minimum_chrome_version, undefined);
+for (const file of [
+  "background.js",
+  "content.js",
+  "options.js",
+  "options.html",
+]) {
+  assert.equal((await stat(`dist-firefox/${file}`)).isFile(), true);
+}
+assert.equal(
+  (await readFile("dist-firefox/background.js", "utf8")).includes(
+    "globalThis.browser ?? globalThis.chrome",
+  ),
+  true,
+);
+console.log("Firefox manifest and assets are valid.");
