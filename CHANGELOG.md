@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-11-19
 
 - Document architecture, Enterprise onboarding, security, testing, and release workflows with selected mdxcn-compatible Markdown figures.
 - Add the project-local mdxcn skill and a pull request documentation template. Extension runtime behavior is unchanged.
